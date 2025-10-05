@@ -3,8 +3,8 @@ set -e
 
 echo "Starting Laravel setup..."
 
-# Optional: wait for PostgreSQL to be ready
-until php -r "new PDO('pgsql:host=' . env('DB_HOST') . ';dbname=' . env('DB_DATABASE'), env('DB_USERNAME'), env('DB_PASSWORD'))"; do
+# Wait for PostgreSQL to be ready
+until php -r "new PDO('pgsql:host=' . getenv('DB_HOST') . ';dbname=' . getenv('DB_DATABASE'), getenv('DB_USERNAME'), getenv('DB_PASSWORD'))"; do
   echo "Waiting for database..."
   sleep 2
 done
