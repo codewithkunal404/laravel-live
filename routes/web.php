@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('tasks.view');
 });
 
 Route::get('/task-list',[TaskController::class,'index'])->name("tasks.view");
