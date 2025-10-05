@@ -18,6 +18,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
 
     <style>
+        body {
+            padding-bottom: 80px;
+        }
+
         #task-list tr {
             cursor: move;
         }
@@ -28,15 +32,23 @@
             top: 1rem;
             right: 1rem;
             z-index: 1055;
+            max-width: 90%;
         }
 
-        /* Table responsiveness */
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        /* Mobile input spacing */
         @media (max-width: 576px) {
+            #toast-container {
+                left: 50%;
+                right: auto;
+                transform: translateX(-50%);
+            }
+
+            .toast {
+                width: 100%;
+                max-width: 350px;
+                font-size: 0.9rem;
+            }
+
+            /* Form responsive adjustments */
             #taskform .col-md-3,
             #taskform .col-md-4,
             #taskform .col-md-2 {
@@ -46,6 +58,41 @@
 
             #taskform button {
                 margin-top: 0.5rem;
+            }
+        }
+
+        /* Table responsiveness for mobile */
+        @media (max-width: 768px) {
+            .table thead {
+                display: none;
+            }
+
+            .table tbody tr {
+                display: block;
+                margin-bottom: 1rem;
+                border: 1px solid #dee2e6;
+                border-radius: 0.5rem;
+                padding: 0.75rem;
+                background: #fff;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            }
+
+            .table tbody td {
+                display: flex;
+                justify-content: space-between;
+                padding: 0.5rem 0;
+                border: none;
+            }
+
+            .table tbody td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                text-transform: capitalize;
+            }
+
+            .d-flex.flex-wrap.gap-2 {
+                flex-direction: column;
+                gap: 0.5rem;
             }
         }
     </style>
@@ -92,12 +139,13 @@
 
     <!-- Toast container -->
     <div id="toast-container"></div>
+
     <!-- Footer -->
-<footer class="bg-dark text-white text-center py-3 mt-4">
-    <div class="container">
-        <small>Made by Kunal Chaudhary © 2025. All rights reserved.</small>
-    </div>
-</footer>
+    <footer class="bg-dark text-white text-center py-3 mt-4">
+        <div class="container">
+            <small>Made by Kunal Chaudhary © 2025. All rights reserved.</small>
+        </div>
+    </footer>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -108,6 +156,7 @@
                 headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
             });
 
+            // Toast helper
             function showToast(message, type = 'success') {
                 const toastId = 'toast-' + Date.now();
                 const toastHtml = `
@@ -124,6 +173,7 @@
                 toastEl.addEventListener('hidden.bs.toast', () => $(toastEl).remove());
             }
 
+            // Load tasks
             function loadData(search = null, status = null, page = 1) {
                 let url = "{{ route('tasks.list') }}";
                 let params = [];
@@ -139,6 +189,7 @@
                 $('#task_id').val("");
             }
 
+            // Initialize drag & drop
             function initSortable() {
                 let tbody = $("#task-list");
                 if (!tbody.length) return;
@@ -170,6 +221,7 @@
                 tbody.find("tr").css("cursor", "move");
             }
 
+            // Initial load
             loadData();
 
             // Pagination
@@ -179,14 +231,11 @@
                 loadData($("#search").val(), $("#task_status").val(), page);
             });
 
-            $("#search").on("keyup", function () {
-                loadData($(this).val(), $("#task_status").val());
-            });
+            // Search & filter
+            $("#search").on("keyup", function () { loadData($(this).val(), $("#task_status").val()); });
+            $("#task_status").on("change", function () { loadData($("#search").val(), $(this).val()); });
 
-            $("#task_status").on("change", function () {
-                loadData($("#search").val(), $(this).val());
-            });
-
+            // Add / Edit task
             $("#taskform").on("submit", function (e) {
                 e.preventDefault();
                 $.post("{{ route('tasks.store') }}", $(this).serialize(), function (res) {
@@ -197,23 +246,26 @@
                 });
             });
 
+            // Delete task
             $(document).on("click", ".task-delete", function (e) {
                 e.preventDefault();
                 let id = $(this).data("id");
-                $.post("{{ route('tasks.delete') }}", { id: id }, function (res) {
+                $.post("{{ route('tasks.delete') }}", { id: id }, function () {
                     showToast("Task deleted", 'success');
                     loadData();
                 });
             });
 
+            // Toggle completion
             $(document).on("click", ".task-toggle", function (e) {
                 e.preventDefault();
-                $.post("{{ route('tasks.toggle') }}", { id: $(this).data("id") }, function (res) {
+                $.post("{{ route('tasks.toggle') }}", { id: $(this).data("id") }, function () {
                     showToast("Task status updated", 'success');
                     loadData();
                 });
             });
 
+            // Edit task with scroll
             $(document).on("click", ".task-edit", function (e) {
                 e.preventDefault();
                 let id = $(this).data("id");
@@ -221,6 +273,7 @@
                     $("#task_id").val(res.id);
                     $("#title").val(res.title);
                     $("#description").val(res.description);
+                    $('html, body').animate({ scrollTop: 0 }, 'slow');
                 });
             });
 
