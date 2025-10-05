@@ -30,11 +30,12 @@ RUN sed -i 's#/var/www/html#/var/www/html/public#g' /etc/apache2/sites-available
 # Install Laravel dependencies
 RUN composer install --optimize-autoloader --no-dev
 
-# Create storage symlink
-RUN php artisan storage:link || true
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Expose port
 EXPOSE 80
 
-# Start Apache
-CMD ["apache2-foreground"]
+# Use entrypoint script to start container
+ENTRYPOINT ["docker-entrypoint.sh"]
