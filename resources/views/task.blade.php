@@ -18,12 +18,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
 
     <style>
-        /* Shrink arrows in pagination */
-        .my-pagination svg {
-            width: 16px;
-            height: 16px;
-        }
-
         #task-list tr {
             cursor: move;
         }
@@ -35,13 +29,32 @@
             right: 1rem;
             z-index: 1055;
         }
+
+        /* Table responsiveness */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        /* Mobile input spacing */
+        @media (max-width: 576px) {
+            #taskform .col-md-3,
+            #taskform .col-md-4,
+            #taskform .col-md-2 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+
+            #taskform button {
+                margin-top: 0.5rem;
+            }
+        }
     </style>
 </head>
 
-<body class="p-4">
+<body class="p-3">
 
     <div class="container">
-        <h2 class="mb-3">Task Management</h2>
+        <h2 class="mb-3 text-center text-md-start">Task Management</h2>
 
         <!-- Task Form -->
         <form id="taskform" class="row g-2 mb-3">
@@ -60,37 +73,41 @@
         </form>
 
         <!-- Filters -->
-        <div class="row mb-3">
-            <div class="col-md-4">
+        <div class="row mb-3 g-2">
+            <div class="col-md-4 col-12">
                 <input type="text" id="search" class="form-control" placeholder="Search Task">
             </div>
-            <div class="col-md-3">
+            <div class="col-md-3 col-12">
                 <select id="task_status" class="form-select">
                     <option value="-1">All Tasks</option>
                     <option value="1">Completed</option>
-                    <option value="0">InCompleted</option>
+                    <option value="0">Incompleted</option>
                 </select>
             </div>
         </div>
 
         <!-- Task List -->
-        <div id="containerForm"></div>
+        <div id="containerForm" class="table-responsive"></div>
     </div>
 
     <!-- Toast container -->
     <div id="toast-container"></div>
+    <!-- Footer -->
+<footer class="bg-dark text-white text-center py-3 mt-4">
+    <div class="container">
+        <small>Made by Kunal Chaudhary © 2025. All rights reserved.</small>
+    </div>
+</footer>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         $(document).ready(function () {
-
             $.ajaxSetup({
                 headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
             });
 
-            // Toast helper
             function showToast(message, type = 'success') {
                 const toastId = 'toast-' + Date.now();
                 const toastHtml = `
@@ -104,11 +121,9 @@
                 const toastEl = document.getElementById(toastId);
                 const bsToast = new bootstrap.Toast(toastEl, { delay: 3000 });
                 bsToast.show();
-                // Remove from DOM after hidden
                 toastEl.addEventListener('hidden.bs.toast', () => $(toastEl).remove());
             }
 
-            // Load tasks
             function loadData(search = null, status = null, page = 1) {
                 let url = "{{ route('tasks.list') }}";
                 let params = [];
@@ -118,15 +133,14 @@
                 if (params.length > 0) url += "?" + params.join("&");
 
                 $("#containerForm").load(url, function () {
-                    initSortable(); // Initialize drag & drop
+                    initSortable();
                 });
                 $("#taskform")[0].reset();
                 $('#task_id').val("");
             }
 
-            // Initialize sortable (drag & drop)
             function initSortable() {
-                let tbody = $("#task-list"); 
+                let tbody = $("#task-list");
                 if (!tbody.length) return;
 
                 tbody.sortable({
@@ -153,11 +167,9 @@
                         });
                     }
                 });
-
                 tbody.find("tr").css("cursor", "move");
             }
 
-            // Initial load
             loadData();
 
             // Pagination
@@ -167,17 +179,14 @@
                 loadData($("#search").val(), $("#task_status").val(), page);
             });
 
-            // Search
             $("#search").on("keyup", function () {
                 loadData($(this).val(), $("#task_status").val());
             });
 
-            // Status filter
             $("#task_status").on("change", function () {
                 loadData($("#search").val(), $(this).val());
             });
 
-            // Add / Edit task
             $("#taskform").on("submit", function (e) {
                 e.preventDefault();
                 $.post("{{ route('tasks.store') }}", $(this).serialize(), function (res) {
@@ -188,7 +197,6 @@
                 });
             });
 
-            // Delete task
             $(document).on("click", ".task-delete", function (e) {
                 e.preventDefault();
                 let id = $(this).data("id");
@@ -198,7 +206,6 @@
                 });
             });
 
-            // Toggle task status
             $(document).on("click", ".task-toggle", function (e) {
                 e.preventDefault();
                 $.post("{{ route('tasks.toggle') }}", { id: $(this).data("id") }, function (res) {
@@ -207,7 +214,6 @@
                 });
             });
 
-            // Edit task
             $(document).on("click", ".task-edit", function (e) {
                 e.preventDefault();
                 let id = $(this).data("id");
@@ -222,5 +228,4 @@
     </script>
 
 </body>
-
 </html>
